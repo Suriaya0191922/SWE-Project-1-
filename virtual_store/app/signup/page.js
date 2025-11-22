@@ -1,6 +1,15 @@
 "use client"; // MUST be at the very top
 import { useState } from "react";
-import { FaUser, FaEnvelope, FaLock, FaPhone, FaShoppingCart, FaStore } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaPhone,
+  FaShoppingCart,
+  FaStore,
+  FaMapMarkerAlt,
+  FaImage,
+} from "react-icons/fa";
 
 export default function Page() {
   const [isSignup, setIsSignup] = useState(true);
@@ -74,9 +83,15 @@ export default function Page() {
       {isSignup && (
         <form className="space-y-4">
           <InputField icon={<FaUser />} placeholder="Full Name" />
+          <InputField icon={<FaUser />} placeholder="Username" />
           <InputField icon={<FaEnvelope />} placeholder="Email" type="email" />
           <InputField icon={<FaLock />} placeholder="Password" type="password" />
           <InputField icon={<FaPhone />} placeholder="Phone Number" />
+          <InputField icon={<FaMapMarkerAlt />} placeholder="Address" />
+          <InputField icon={<FaImage />} type="file" placeholder="Profile Image" />
+
+          {/* Buyer extra field: Preferred Category */}
+          {isBuyer && <InputField icon={<FaUser />} placeholder="Preferred Category" />}
 
           <button
             type="submit"
