@@ -13,22 +13,18 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo "Installing npm packages..."
-                bat 'npm install'
-            }
-        }
-
-        stage('Start Backend Server') {
-            steps {
-                echo "Starting backend server on port 5000..."
-                bat 'start /B cmd /C "npm run dev"'
-                sleep time: 5, unit: 'SECONDS'
+                dir('backend') {
+                    bat 'npm install'
+                }
             }
         }
 
         stage('Run Automated Tests') {
             steps {
-                echo "Running Jest + Supertest API tests..."
-                bat 'npm test'
+                echo "Running Jest automated tests..."
+                dir('backend') {
+                    bat 'npm test'
+                }
             }
         }
     }
