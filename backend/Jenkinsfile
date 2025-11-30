@@ -2,49 +2,26 @@ pipeline {
     agent any
 
     stages {
-
         stage('Checkout') {
             steps {
-                echo "Pulling project from Git..."
                 checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo "Installing npm packages..."
                 dir('backend') {
                     bat 'npm install'
                 }
             }
         }
 
-        stage('Start Backend Server') {
-            steps {
-                echo "Starting backend server..."
-                dir('backend') {
-                    bat "start /B cmd /c node src/server.js"
-                }
-
-                echo "Waiting for server to start..."
-                sleep time: 5, unit: 'SECONDS'
-            }
-        }
-
         stage('Run Automated Tests') {
             steps {
-                echo "Running Jest automated tests..."
                 dir('backend') {
                     bat 'npm test'
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            echo "Stopping any running node processes..."
-            bat 'taskkill /F /IM node.exe || exit 0'
         }
     }
 }
