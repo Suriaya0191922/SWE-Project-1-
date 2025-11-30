@@ -19,6 +19,18 @@ pipeline {
             }
         }
 
+        stage('Start Backend Server') {
+            steps {
+                echo "Starting backend server..."
+                dir('backend') {
+                    bat "start /B cmd /c node src/server.js"
+                }
+
+                echo "Waiting for server to start..."
+                sleep time: 5, unit: 'SECONDS'
+            }
+        }
+
         stage('Run Automated Tests') {
             steps {
                 echo "Running Jest automated tests..."
