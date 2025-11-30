@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo "Pulling project from Git..."
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo "Installing npm packages..."
+                bat 'npm install'
+            }
+        }
+
+        stage('Start Backend Server') {
+            steps {
+                echo "Starting backend server on port 5000..."
+                bat 'start /B cmd /C "npm run dev"'
+                sleep time: 5, unit: 'SECONDS'
+            }
+        }
+
+        stage('Run Automated Tests') {
+            steps {
+                echo "Running Jest + Supertest API tests..."
+                bat 'npm test'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Stopping any running node processes..."
+            bat 'taskkill /F /IM node.exe || exit 0'
+        }
+    }
+}
