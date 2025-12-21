@@ -1,21 +1,11 @@
-import express from "express";
+import "./cron/cleanupCron.js";  // automatically runs cronjobs
+import app from "./app.js";
 import dotenv from "dotenv";
-import cors from "cors";
-import authRoutes from "./routes/authRoutes.js";
-import path from "path";
 
 dotenv.config();
 
-const app = express();
+const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
-app.use(cors());
-
-// serve uploaded images
-app.use("/uploads", express.static("uploads"));
-
-app.use("/api/auth", authRoutes);
-
-app.listen(process.env.PORT, () => {
-  console.log(`Backend running at http://localhost:${process.env.PORT}`);
+app.listen(PORT, () => {
+  console.log(`Backend running at http://localhost:${PORT}`);
 });

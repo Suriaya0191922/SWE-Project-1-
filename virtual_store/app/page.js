@@ -50,10 +50,11 @@ export default function WelcomePage() {
   <a href="#" className="text-purple-200 hover:text-green-300 transition-colors text-sm">About Us</a>
   <a href="#" className="text-purple-200 hover:text-green-300 transition-colors text-sm">Contact Us</a>
 
-  <Link href="/signup">
-    <button className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm">
-      Login
-    </button>
+  <Link
+    href="/signup"
+    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm inline-block"
+  >
+    Login
   </Link>
 
   <Link href="/signup">

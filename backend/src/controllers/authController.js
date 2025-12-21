@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // ---------- SIGNUP ----------
 export const signup = async (req, res) => {
   try {
-    const {
+    let {
       name,
       username,
       email,
@@ -15,16 +15,51 @@ export const signup = async (req, res) => {
       phone,
       address,
       role,
-      preferredCategory
+      preferredCategory,
     } = req.body;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return res.status(400).json({ message: "Email already in use" });
+    // ✅ Normalize email (recommended)
+    email = email.toLowerCase();
 
+    // ✅ SELLER EMAIL DOMAIN VALIDATION
+    if (role === "seller") {
+      const allowedDomains = [
+        "@student.cuet.ac.bd",
+        "@cuet.ac.bd",
+      ];
+
+      const isAllowed = allowedDomains.some(domain =>
+        email.endsWith(domain)
+      );
+
+      if (!isAllowed) {
+        return res.status(400).json({
+          message:
+            "Seller email must end with @student.cuet.ac.bd or @cuet.ac.bd",
+        });
+      }
+    }
+
+    // ✅ CHECK UNIQUE (email + role)
+    const existing = await prisma.user.findFirst({
+      where: {
+        email,
+        role,
+      },
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        message: `Email already registered as ${role}`,
+      });
+    }
+
+    // ✅ PASSWORD HASH
     const hashed = await bcrypt.hash(password, 10);
 
     const profileImage = req.file ? req.file.filename : null;
 
+    // ✅ CREATE USER
     const user = await prisma.user.create({
       data: {
         name,
@@ -35,13 +70,13 @@ export const signup = async (req, res) => {
         address,
         role,
         preferredCategory,
-        profileImage
+        profileImage,
       },
     });
 
     res.json({ message: "Signup successful", user });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -50,11 +85,16 @@ export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(400).json({ message: "Invalid email or password" });
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        role,
+      },
+    });
 
-    if (user.role !== role)
-      return res.status(400).json({ message: "Role does not match (buyer/seller)" });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Invalid email or password" });

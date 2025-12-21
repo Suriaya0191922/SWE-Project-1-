@@ -1,6 +1,6 @@
-"use client";
-
+'use client';
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FaUser,
   FaEnvelope,
@@ -13,6 +13,8 @@ import {
 } from "react-icons/fa";
 
 export default function Page() {
+  const router = useRouter();
+
   const [isSignup, setIsSignup] = useState(true);
   const [isBuyer, setIsBuyer] = useState(true);
 
@@ -63,14 +65,15 @@ export default function Page() {
 
   // LOGIN HANDLER
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const payload = {
-      email: formData.email,
-      password: formData.password,
-      role: isBuyer ? "buyer" : "seller",
-    };
+  const payload = {
+    email: formData.email,
+    password: formData.password,
+    role: isBuyer ? "buyer" : "seller",
+  };
 
+  try {
     const res = await fetch("http://localhost:5000/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -79,13 +82,25 @@ export default function Page() {
 
     const data = await res.json();
 
-    if (res.ok) {
-      alert("Login successful!");
-      localStorage.setItem("token", data.token);
-    } else {
+    if (!res.ok) {
       alert(data.message);
+      return;
     }
-  };
+
+    localStorage.setItem("token", data.token);
+
+    if (payload.role === "seller") {
+      router.push("/seller");
+    } else {
+      router.push("/buyer"); 
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Login failed");
+  }
+};
+
 
   return (
     <div className="relative w-full max-w-md bg-white/20 backdrop-blur-md rounded-2xl shadow-xl p-8 text-center overflow-hidden border border-white/20 mx-auto mt-16">
