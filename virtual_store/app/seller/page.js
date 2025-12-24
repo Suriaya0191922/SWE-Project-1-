@@ -6,13 +6,12 @@ export default function SellerDashboardPage() {
   const [products, setProducts] = useState([]);
   const [featuredCount, setFeaturedCount] = useState(0);
 
-  // Load products from API / localStorage
   const loadProducts = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:3000/api/products", {
+      const res = await fetch("http://localhost:5001/api/products", {  // ✅ Changed
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -33,7 +32,7 @@ export default function SellerDashboardPage() {
     if (!confirm("Delete this product?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/products/${id}`, {
+      const res = await fetch(`http://localhost:5001/api/products/${id}`, {  // ✅ Changed
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -45,133 +44,94 @@ export default function SellerDashboardPage() {
     }
   };
 
-  // Styles
-  const containerStyle = {
-    padding: "20px",
-    fontFamily: "Arial, sans-serif",
-    backgroundColor: "#f4f7f9",
-    minHeight: "100vh",
-  };
-
-  const headerStyle = {
-    padding: "20px",
-    borderRadius: "10px",
-    backgroundColor: "#033c8c",
-    color: "#aaff71",
-    marginBottom: "20px",
-    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-  };
-
-  const cardContainerStyle = {
-    display: "flex",
-    gap: "20px",
-    flexWrap: "wrap",
-    marginBottom: "20px",
-  };
-
-  const cardStyle = {
-    flex: "1 1 200px",
-    padding: "20px",
-    borderRadius: "10px",
-    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-    color: "#033c8c",
-  };
-
-  const tableStyle = {
-    width: "100%",
-    borderCollapse: "collapse",
-    backgroundColor: "#ffffffcc",
-    borderRadius: "10px",
-    overflow: "hidden",
-    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-  };
-
-  const thStyle = {
-    backgroundColor: "#033c8c",
-    color: "#aaff71",
-    padding: "10px",
-    textAlign: "left",
-  };
-
-  const tdStyle = {
-    padding: "10px",
-    borderBottom: "1px solid #ccc",
-  };
-
-  const statusStyle = (status) => ({
-    padding: "5px 10px",
-    borderRadius: "5px",
-    backgroundColor:
-      status === "Sold"
-        ? "#4caf50"
-        : status === "Pending"
-        ? "#ff9800"
-        : "#2196f3",
-    color: "#fff",
-    fontWeight: "bold",
-    display: "inline-block",
-  });
+  // ... rest of your code stays the same
 
   return (
-    <div style={containerStyle}>
+    <div style={styles.container}>
       {/* Header */}
-      <div style={headerStyle}>
-        <h1>Welcome Seller - Your Dashboard</h1>
+      <header style={styles.header}>
+        <h1 style={styles.headerTitle}>Seller Dashboard</h1>
+        <p style={styles.headerSubtitle}>
+          Manage your products and track your performance
+        </p>
+      </header>
+
+      {/* Stats Cards */}
+      <div style={styles.statsGrid}>
+        <div style={{ ...styles.statCard, ...styles.stat1 }}>
+          <div style={styles.statIcon}>📦</div>
+          <div>
+            <p style={styles.statLabel}>Total Products</p>
+            <h2 style={styles.statValue}>{products.length}</h2>
+          </div>
+        </div>
+
+        <div style={{ ...styles.statCard, ...styles.stat2 }}>
+          <div style={styles.statIcon}>💰</div>
+          <div>
+            <p style={styles.statLabel}>Products Sold</p>
+            <h2 style={styles.statValue}>
+              {products.reduce((acc, p) => acc + (p.sold || 0), 0)}
+            </h2>
+          </div>
+        </div>
+
+        <div style={{ ...styles.statCard, ...styles.stat3 }}>
+          <div style={styles.statIcon}>💬</div>
+          <div>
+            <p style={styles.statLabel}>New Messages</p>
+            <h2 style={styles.statValue}>
+              {products.filter((p) => p.messages?.length > 0).length}
+            </h2>
+          </div>
+        </div>
+
+        <div style={{ ...styles.statCard, ...styles.stat4 }}>
+          <div style={styles.statIcon}>⭐</div>
+          <div>
+            <p style={styles.statLabel}>Featured</p>
+            <h2 style={styles.statValue}>{featuredCount}</h2>
+          </div>
+        </div>
       </div>
 
-      {/* Dashboard Cards */}
-      <div style={cardContainerStyle}>
-        <div style={{ ...cardStyle, backgroundColor: "#c9fba8" }}>
-          <h3>Total Products</h3>
-          <p>{products.length} items</p>
-        </div>
-        <div style={{ ...cardStyle, backgroundColor: "#e0cff6" }}>
-          <h3>Products Sold</h3>
-          <p>{products.reduce((acc, p) => acc + (p.sold || 0), 0)} items</p>
-        </div>
-        <div style={{ ...cardStyle, backgroundColor: "#d0f5cd" }}>
-          <h3>New Messages</h3>
-          <p>{products.filter((p) => p.messages && p.messages.length > 0).length}</p>
-        </div>
-        <div style={{ ...cardStyle, backgroundColor: "#e7d4f7" }}>
-          <h3>Featured Products</h3>
-          <p>{featuredCount} items</p>
-        </div>
-      </div>
+      {/* Table Section */}
+      <div style={styles.tableCard}>
+        <h2 style={styles.tableTitle}>Recent Activity</h2>
 
-      {/* Products Table */}
-      <div>
-        <h2 style={{ color: "#033c8c", marginBottom: "10px" }}>Recent Activity</h2>
-        <table style={tableStyle}>
+        <table style={styles.table}>
           <thead>
             <tr>
-              <th style={thStyle}>Product</th>
-              <th style={thStyle}>Action</th>
-              <th style={thStyle}>Date</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Delete</th>
+              <th style={styles.th}>Product</th>
+              <th style={styles.th}>Status</th>
+              <th style={styles.th}>Date</th>
+              <th style={styles.th}>Action</th>
             </tr>
           </thead>
           <tbody>
             {products.map((p, i) => (
-              <tr key={i}>
-                <td style={tdStyle}>{p.name}</td>
-                <td style={tdStyle}>{p.action || "N/A"}</td>
-                <td style={tdStyle}>{p.dateAdded || "N/A"}</td>
-                <td style={tdStyle}>
-                  <span style={statusStyle(p.status)}>{p.status || "Pending"}</span>
-                </td>
-                <td style={tdStyle}>
-                  <button
+              <tr key={i} style={styles.tr}>
+                <td style={styles.td}>{p.name}</td>
+                <td style={styles.td}>
+                  <span
                     style={{
-                      padding: "5px 10px",
-                      borderRadius: "5px",
-                      border: "none",
-                      backgroundColor: "#ff4d4f",
-                      color: "#fff",
-                      cursor: "pointer",
+                      ...styles.status,
+                      backgroundColor:
+                        p.status === "Sold"
+                          ? "#22c55e"
+                          : p.status === "Pending"
+                          ? "#f59e0b"
+                          : "#3b82f6",
                     }}
+                  >
+                    {p.status || "Pending"}
+                  </span>
+                </td>
+                <td style={styles.td}>{p.dateAdded || "N/A"}</td>
+                <td style={styles.td}>
+                  <button
                     onClick={() => handleDelete(p.id)}
+                    style={styles.deleteBtn}
                   >
                     Delete
                   </button>
@@ -184,3 +144,110 @@ export default function SellerDashboardPage() {
     </div>
   );
 }
+
+/* ---------- Buyer-style Dashboard Styles ---------- */
+const styles = {
+  container: {
+    padding: "32px",
+    backgroundColor: "#f8fafc",
+    minHeight: "100vh",
+    fontFamily: "'Inter', sans-serif",
+  },
+  header: {
+    marginBottom: "32px",
+  },
+  headerTitle: {
+    fontSize: "32px",
+    fontWeight: 700,
+    color: "#033c8c",
+    marginBottom: "8px",
+  },
+  headerSubtitle: {
+    fontSize: "16px",
+    color: "#64748b",
+  },
+
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gap: "24px",
+    marginBottom: "40px",
+  },
+  statCard: {
+    background: "#fff",
+    padding: "24px",
+    borderRadius: "16px",
+    display: "flex",
+    gap: "16px",
+    alignItems: "center",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+  },
+  stat1: { borderLeft: "4px solid #c9fba8" },
+  stat2: { borderLeft: "4px solid #e0cff6" },
+  stat3: { borderLeft: "4px solid #d0f5cd" },
+  stat4: { borderLeft: "4px solid #e7d4f7" },
+
+  statIcon: { fontSize: "36px" },
+  statLabel: {
+    fontSize: "13px",
+    color: "#64748b",
+    textTransform: "uppercase",
+    fontWeight: 600,
+  },
+  statValue: {
+    fontSize: "30px",
+    fontWeight: 700,
+    color: "#033c8c",
+  },
+
+  tableCard: {
+    background: "#fff",
+    borderRadius: "16px",
+    padding: "24px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+  },
+  tableTitle: {
+    fontSize: "22px",
+    fontWeight: 700,
+    color: "#033c8c",
+    marginBottom: "16px",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+  },
+  th: {
+    textAlign: "left",
+    padding: "12px",
+    color: "#64748b",
+    fontSize: "13px",
+    textTransform: "uppercase",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  tr: {
+    borderBottom: "1px solid #e2e8f0",
+  },
+  td: {
+    padding: "12px",
+    fontSize: "14px",
+    color: "#1e293b",
+  },
+  status: {
+    padding: "6px 12px",
+    borderRadius: "999px",
+    color: "#fff",
+    fontSize: "12px",
+    fontWeight: 600,
+  },
+  deleteBtn: {
+    backgroundColor: "#ef4444",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    padding: "8px 14px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+};

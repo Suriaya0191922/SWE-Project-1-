@@ -8,10 +8,9 @@ export default function UploadProduct() {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
 
-  const [images, setImages] = useState([]);        // ✅ multiple images
-  const [previews, setPreviews] = useState([]);    // ✅ multiple previews
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
 
-  // ✅ IMAGE HANDLER
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setImages(files);
@@ -20,11 +19,10 @@ export default function UploadProduct() {
     setPreviews(previewUrls);
   };
 
-  // ✅ SUBMIT HANDLER (REAL BACKEND)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const token = localStorage.getItem("token"); // ✅ from login
+    const token = localStorage.getItem("token");
 
     if (!token) {
       alert("Please login as seller");
@@ -39,14 +37,14 @@ export default function UploadProduct() {
     fd.append("description", description);
 
     images.forEach(img => {
-      fd.append("images", img); // ✅ MUST match multer key
+      fd.append("images", img);
     });
 
     try {
-      const res = await fetch("http://localhost:5000/api/products/upload", {
+      const res = await fetch("http://localhost:5001/api/products/upload", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // ✅ JWT
+          Authorization: `Bearer ${token}`,
         },
         body: fd,
       });
@@ -60,7 +58,6 @@ export default function UploadProduct() {
 
       alert("✅ Product uploaded successfully");
 
-      // ✅ reset form
       setProductName("");
       setCategory("");
       setCondition("");
@@ -89,88 +86,159 @@ export default function UploadProduct() {
   const conditions = ["New", "Like New", "Good", "Fair"];
 
   return (
-    <div className="max-w-3xl mx-auto p-6 rounded shadow-md mt-10 bg-purple-100">
-      <h1 className="text-2xl font-bold mb-6 text-blue-900">
-        Upload Product
-      </h1>
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          
+          {/* Navy Blue Header */}
+          <div className="bg-blue-900 px-8 py-6">
+            <h1 className="text-3xl font-bold text-white">
+              Upload New Product
+            </h1>
+            <p className="text-blue-100 mt-2">
+              Fill in the details below to list your product
+            </p>
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        
-        <input
-          type="text"
-          placeholder="Product Name"
-          value={productName}
-          onChange={e => setProductName(e.target.value)}
-          className="w-full border px-3 py-2"
-          required
-        />
+          {/* White Form Section */}
+          <div className="p-8 space-y-6">
+            
+            {/* Product Name */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Product Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter product name"
+                value={productName}
+                onChange={e => setProductName(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-900 focus:outline-none transition-colors"
+                required
+              />
+            </div>
 
-        <select
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-          className="w-full border px-3 py-2"
-          required
-        >
-          <option value="">Select Category</option>
-          {categories.map(c => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+            {/* Category and Condition Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={category}
+                  onChange={e => setCategory(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-900 focus:outline-none transition-colors bg-white"
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
 
-        <select
-          value={condition}
-          onChange={e => setCondition(e.target.value)}
-          className="w-full border px-3 py-2"
-          required
-        >
-          <option value="">Select Condition</option>
-          {conditions.map(c => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+              {/* Condition */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Condition <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={condition}
+                  onChange={e => setCondition(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-900 focus:outline-none transition-colors bg-white"
+                  required
+                >
+                  <option value="">Select Condition</option>
+                  {conditions.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-        <input
-          type="number"
-          placeholder="Price (BDT)"
-          value={price}
-          onChange={e => setPrice(e.target.value)}
-          className="w-full border px-3 py-2"
-          required
-        />
+            {/* Price */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Price (BDT) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                placeholder="Enter price in BDT"
+                value={price}
+                onChange={e => setPrice(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-900 focus:outline-none transition-colors"
+                required
+              />
+            </div>
 
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          className="w-full border px-3 py-2"
-        />
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Description
+              </label>
+              <textarea
+                placeholder="Enter product description"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-900 focus:outline-none transition-colors h-32 resize-none"
+              />
+            </div>
 
-        {/* ✅ MULTIPLE IMAGES */}
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleImageChange}
-          required
-        />
+            {/* Purple Image Upload Section */}
+            <div className="bg-purple-50 p-6 rounded-lg border-2 border-purple-200">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Product Images <span className="text-red-500">*</span>
+              </label>
+              <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center bg-white hover:border-purple-500 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  className="w-full"
+                  required
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  Upload one or more images (JPG, PNG)
+                </p>
+              </div>
+            </div>
 
-        <div className="flex gap-2 flex-wrap">
-          {previews.map((src, i) => (
-            <img
-              key={i}
-              src={src}
-              className="w-24 h-24 object-cover rounded border"
-            />
-          ))}
+            {/* Image Previews */}
+            {previews.length > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Image Preview
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {previews.map((src, i) => (
+                    <div key={i} className="relative">
+                      <img
+                        src={src}
+                        className="w-full h-32 object-cover rounded-lg border-2 border-gray-300 shadow-sm"
+                        alt={`Preview ${i + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Green Submit Button */}
+            <div className="pt-4">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+              >
+                Upload Product
+              </button>
+            </div>
+          </div>
         </div>
-
-        <button
-          type="submit"
-          className="bg-blue-900 text-white px-6 py-2 rounded"
-        >
-          Upload Product
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

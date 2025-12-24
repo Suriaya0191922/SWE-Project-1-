@@ -1,37 +1,79 @@
-
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import productsData from "@/app/buyer/data/products";
 
 export default function AllProductsPage() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    setProducts(productsData);
-    setFilteredProducts(productsData);
+    fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/api/products");
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+        setFilteredProducts(data);
+      } else {
+        console.error("Failed to fetch products");
+        showNotification("Failed to load products", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      showNotification("Network error", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const filtered = products.filter((p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      p.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
   // 🛒 Add to Cart
-  const addToCart = (product) => {
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    if (cart.find((item) => item.id === product.id)) {
-      showNotification("Already in cart!", "warning");
+  const addToCart = async (product) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showNotification("Please login first", "error");
+      router.push("/signup");
       return;
     }
-    cart.push({ ...product, quantity: 1 });
-    localStorage.setItem("cart", JSON.stringify(cart));
-    showNotification("Added to cart ✅", "success");
+
+    try {
+      const response = await fetch("http://localhost:5001/api/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: 1,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showNotification("Added to cart ✅", "success");
+      } else {
+        showNotification(data.message || "Failed to add to cart", "error");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      showNotification("Network error", "error");
+    }
   };
 
   // ❤️ Add to Wishlist
@@ -46,16 +88,20 @@ export default function AllProductsPage() {
     showNotification("Added to wishlist ❤️", "success");
   };
 
-  // 💬 Contact Seller (navigate to messaging page)
-  const contactSeller = (product) => {
-    // Use product.sellerId or generate a dummy one for now
-    const sellerId = product.sellerId || product.id; // replace with actual seller id if available
-    router.push(`/buyer/message?seller=${sellerId}&product=${product.id}`);
-  };
-
   const showNotification = (message, type) => {
     alert(message);
   };
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <div style={{ textAlign: "center", padding: "80px 20px" }}>
+          <span style={{ fontSize: "48px" }}>⏳</span>
+          <h3 style={styles.emptyTitle}>Loading products...</h3>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -104,18 +150,26 @@ export default function AllProductsPage() {
             <div key={p.id} style={styles.card}>
               {/* Product Image */}
               <div style={styles.imageWrapper}>
-                <img src={p.image} alt={p.name} style={styles.image} />
+                <img 
+                  src={p.images && p.images.length > 0 ? `http://localhost:5001/uploads/${p.images[0].imageUrl}` : "/placeholder.jpg"} 
+                  alt={p.productName} 
+                  style={styles.image} 
+                />
               </div>
 
               {/* Product Info */}
               <div style={styles.cardContent}>
-                <h3 style={styles.productName}>{p.name}</h3>
+                <h3 style={styles.productName}>{p.productName}</h3>
+                
+                {/* UPDATED PRICE SECTION: Using ৳ and en-BD formatting */}
                 <div style={styles.priceRow}>
-                  <span style={styles.price}>${p.price}</span>
+                  <span style={styles.price}>
+                    ৳{Number(p.price).toLocaleString('en-BD')}
+                  </span>
                   <span style={styles.stock}>In Stock</span>
                 </div>
 
-                <p style={styles.actions}>{p.description}</p>
+                <p style={styles.description}>{p.description}</p>
 
                 {/* Action Buttons */}
                 <div style={styles.actions}>
@@ -135,13 +189,12 @@ export default function AllProductsPage() {
                       ♥
                     </button>
                     <button
-  style={{ ...styles.iconBtn, ...styles.contactBtn }}
-  onClick={() => router.push(`/buyer/message?sellerId=${p.sellerId || p.id}&productId=${p.id}`)}
-  title="Contact Seller"
->
-  Contact
-</button>
-
+                      style={{ ...styles.iconBtn, ...styles.contactBtn }}
+                      onClick={() => router.push(`/buyer/message?sellerId=${p.sellerId}&productId=${p.id}`)}
+                      title="Contact Seller"
+                    >
+                      💬 Contact
+                    </button>
                   </div>
                 </div>
               </div>
@@ -177,6 +230,7 @@ const styles = {
   priceRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
   price: { fontSize: "24px", fontWeight: "700", color: "#033c8c" },
   stock: { fontSize: "12px", fontWeight: "600", color: "#10b981", backgroundColor: "#d1fae5", padding: "4px 10px", borderRadius: "6px", textTransform: "uppercase", letterSpacing: "0.5px" },
+  description: { fontSize: "14px", color: "#64748b", margin: "0 0 16px 0", lineHeight: "1.5", display: "-webkit-box", WebkitLineClamp: "2", WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "42px" },
   actions: { display: "flex", flexDirection: "column", gap: "10px" },
   cartBtn: { padding: "12px 16px", backgroundColor: "#033c8c", color: "white", border: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%" },
   iconBtns: { display: "flex", gap: "8px" },

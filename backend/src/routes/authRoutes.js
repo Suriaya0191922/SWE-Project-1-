@@ -1,7 +1,8 @@
 import express from "express";
 import multer from "multer";
-import { signup, login } from "../controllers/authController.js";
+import { signup, login, getMe } from "../controllers/authController.js";
 import { upload } from "../middlewares/upload.js";
+import { authenticate } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -71,5 +72,21 @@ router.post("/signup", upload.single("profileImage"), signup);
  *         description: Login successful
  */
 router.post("/login", login);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get Current User
+ *     description: Retrieves the profile of the currently logged-in user.
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successful retrieval of user profile
+ */
+router.get("/me", authenticate, getMe);
 
 export default router;

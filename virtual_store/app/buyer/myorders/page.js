@@ -1,38 +1,57 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // Sample data; replace with API call later
-    setOrders([
-      {
-        id: 1,
-        productName: "Physics Textbook",
-        quantity: 1,
-        price: 350,
-        status: "Shipped",
-        date: "2025-12-01",
-      },
-      {
-        id: 2,
-        productName: "Laptop Bag",
-        quantity: 2,
-        price: 1600,
-        status: "Delivered",
-        date: "2025-12-05",
-      },
-      {
-        id: 3,
-        productName: "Calculator",
-        quantity: 1,
-        price: 450,
-        status: "Pending",
-        date: "2025-12-08",
-      },
-    ]);
+    fetchOrders();
   }, []);
+
+  const fetchOrders = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/signup");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5001/api/orders", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data);
+      } else if (response.status === 401) {
+        localStorage.removeItem("token");
+        router.push("/signup");
+      } else {
+        alert("Failed to load orders");
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      alert("Network error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="text-center mt-10">
+          <span className="text-4xl">⏳</span>
+          <h3 className="text-xl font-semibold mt-4">Loading orders...</h3>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -57,22 +76,33 @@ export default function MyOrdersPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50 transition">
-                  <td className="px-4 py-3">{order.id}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{order.productName}</td>
-                  <td className="px-4 py-3">{order.quantity}</td>
-                  <td className="px-4 py-3">{order.price}</td>
-                  <td className={`px-4 py-3 font-semibold ${
-                    order.status === "Delivered"
-                      ? "text-green-600"
-                      : order.status === "Shipped"
-                      ? "text-blue-600"
-                      : "text-orange-500"
-                  }`}>
-                    {order.status}
-                  </td>
-                  <td className="px-4 py-3">{order.date}</td>
-                </tr>
+                order.items.map((item, index) => (
+                  <tr key={`${order.id}-${item.productId}`} className="hover:bg-gray-50 transition">
+                    {index === 0 && (
+                      <>
+                        <td className="px-4 py-3" rowSpan={order.items.length}>#{order.id}</td>
+                      </>
+                    )}
+                    <td className="px-4 py-3 font-medium text-gray-800">{item.product.productName}</td>
+                    <td className="px-4 py-3">{item.quantity}</td>
+                    <td className="px-4 py-3">${item.price}</td>
+                    {index === 0 && (
+                      <>
+                        <td className={`px-4 py-3 font-semibold ${
+                          order.status === 'pending' ? 'text-yellow-600' :
+                          order.status === 'confirmed' ? 'text-blue-600' :
+                          order.status === 'shipped' ? 'text-purple-600' :
+                          order.status === 'delivered' ? 'text-green-600' : 'text-red-600'
+                        }`} rowSpan={order.items.length}>
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </td>
+                        <td className="px-4 py-3" rowSpan={order.items.length}>
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))
               ))}
             </tbody>
           </table>

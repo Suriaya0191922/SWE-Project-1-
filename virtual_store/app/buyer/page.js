@@ -1,18 +1,76 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import productsData from "@/app/buyer/data/products";
+import { useRouter } from "next/navigation";
 
 export default function BuyerDashboard() {
   const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
   const [wishlist, setWishlist] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    setProducts(productsData);
-    setCart(JSON.parse(localStorage.getItem("cart")) || []);
-    setWishlist(JSON.parse(localStorage.getItem("wishlist")) || []);
+    fetchDashboardData();
   }, []);
+
+  const fetchDashboardData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/signup");
+      return;
+    }
+
+    try {
+      // Fetch products
+      const productsRes = await fetch("http://localhost:5001/api/products");
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        setProducts(productsData.slice(0, 6)); // Show only first 6 products
+      }
+
+      // Fetch cart
+      const cartRes = await fetch("http://localhost:5001/api/cart", {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (cartRes.ok) {
+        const cartData = await cartRes.json();
+        setCartItems(cartData);
+      }
+
+      // Fetch orders
+      const ordersRes = await fetch("http://localhost:5001/api/orders", {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData.slice(0, 5)); // Show only recent 5 orders
+      }
+
+      // Fetch wishlist (still localStorage for now)
+      const wishlistData = JSON.parse(localStorage.getItem("wishlist")) || [];
+      setWishlist(wishlistData);
+
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <div style={{ textAlign: "center", padding: "80px 20px" }}>
+          <span style={{ fontSize: "48px" }}>⏳</span>
+          <h3 style={{ fontSize: "24px", fontWeight: "600", color: "#1e293b", margin: "16px 0" }}>
+            Loading your dashboard...
+          </h3>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -39,7 +97,7 @@ export default function BuyerDashboard() {
           <div style={styles.statIcon}>🛒</div>
           <div style={styles.statContent}>
             <p style={styles.statLabel}>Cart Items</p>
-            <h2 style={styles.statValue}>{cart.length}</h2>
+            <h2 style={styles.statValue}>{cartItems.length}</h2>
             <p style={styles.statChange}>Ready to checkout</p>
           </div>
         </div>
@@ -50,6 +108,15 @@ export default function BuyerDashboard() {
             <p style={styles.statLabel}>Wishlist</p>
             <h2 style={styles.statValue}>{wishlist.length}</h2>
             <p style={styles.statChange}>Saved for later</p>
+          </div>
+        </div>
+
+        <div style={{ ...styles.statCard, ...styles.statCard4 }}>
+          <div style={styles.statIcon}>📋</div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>My Orders</p>
+            <h2 style={styles.statValue}>{orders.length}</h2>
+            <p style={styles.statChange}>Order history</p>
           </div>
         </div>
 
@@ -83,23 +150,32 @@ export default function BuyerDashboard() {
           <div key={p.id} style={styles.productCard}>
             <div style={styles.imageWrapper}>
               <img
-                src={p.image}
-                alt={p.name}
+                src={p.images && p.images.length > 0 ? `http://localhost:5001/uploads/${p.images[0].imageUrl}` : "/placeholder.jpg"}
+                alt={p.productName}
                 style={styles.productImage}
               />
               <div style={styles.imageBadge}>New</div>
             </div>
             <div style={styles.productContent}>
-              <h3 style={styles.productName}>{p.name}</h3>
+              <h3 style={styles.productName}>{p.productName}</h3>
               <p style={styles.productPrice}>${p.price}</p>
               <div style={styles.productActions}>
-                <button style={styles.addToCartBtn}>
-                  <span style={styles.btnIcon}>🛒</span>
+                <button 
+                  style={styles.addToCartBtn}
+                  onClick={() => {
+                    const token = localStorage.getItem("token");
+                    if (!token) {
+                      alert("Please login first");
+                      router.push("/signup");
+                      return;
+                    }
+                    // Add to cart logic here
+                    alert("Add to cart functionality coming soon!");
+                  }}
+                >
                   Add to Cart
                 </button>
-                <button style={styles.wishlistBtn}>
-                  <span style={styles.btnIcon}>♥</span>
-                </button>
+                <button style={styles.wishlistBtn}>❤️</button>
               </div>
             </div>
           </div>

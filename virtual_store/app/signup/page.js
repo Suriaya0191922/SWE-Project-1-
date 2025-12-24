@@ -53,14 +53,25 @@ export default function Page() {
       fd.append("profileImage", profileImage);
     }
 
-    const res = await fetch("http://localhost:5000/api/auth/signup", {
-      method: "POST",
-      body: fd,
-    });
+    try {
+      const res = await fetch("http://localhost:5001/api/auth/signup", {
+        method: "POST",
+        body: fd,
+      });
 
-    const data = await res.json();
-    alert(data.message);
-    console.log(data);
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Signup successful: " + data.message);
+        // Redirect or something
+      } else {
+        alert("Signup failed: " + data.message);
+      }
+      console.log(data);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      alert("Network error: Unable to connect to server. Please try again.");
+    }
   };
 
   // LOGIN HANDLER
@@ -74,7 +85,7 @@ export default function Page() {
   };
 
   try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
+    const res = await fetch("http://localhost:5001/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

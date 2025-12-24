@@ -22,6 +22,11 @@ model User {
 
   products          Product[]
 
+  cartItems         Cart[]
+  sentOrders        Order[]         @relation("OrderBuyer")
+  sentMessages      Message[]       @relation("MessageSender")
+  receivedMessages  Message[]       @relation("MessageReceiver")
+
   @@unique([email, role])
 }
 
@@ -38,6 +43,9 @@ model Product {
   seller   User @relation(fields: [sellerId], references: [id])
 
   images   ProductImage[]
+  cartItems Cart[]
+  orderItems OrderItem[]
+  messages Message[] // Add this
 }
 
 model ProductImage {
@@ -49,3 +57,61 @@ model ProductImage {
 
   @@index([productId])
 }
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  totalAmount Decimal  @db.Decimal(10, 2)
+  status      String   @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  createdAt   DateTime @default(now())
+
+  buyerId     Int
+  buyer       User     @relation("OrderBuyer", fields: [buyerId], references: [id])
+
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id        Int @id @default(autoincrement())
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2) // price at time of order
+
+  orderId   Int
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  senderId   Int
+  receiverId Int
+  productId  Int?     // ✅ ADD THIS
+
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  product    Product? @relation(fields: [productId], references: [id]) // ✅ ADD THIS
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([productId])
+}
+

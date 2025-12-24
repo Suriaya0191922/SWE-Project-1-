@@ -148,3 +148,36 @@ export const getMyProducts = async (req, res) => {
     });
   }
 };
+// ---------- GET SINGLE PRODUCT (WITH SELLER DETAILS) ----------
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // GUARD 1: Prevent NaN/undefined crash
+    // This is the most important fix for your "App Crashed" loop
+    const productId = Number(id);
+    if (!id || isNaN(productId)) {
+      return res.status(400).json({ message: "Invalid product ID provided" });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        seller: { 
+          select: { id: true, name: true, username: true }
+        },
+        images: true
+      }
+    });
+
+    // GUARD 2: Check if product actually exists
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
+  } catch (e) {
+    console.error("Error in getProductById:", e);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

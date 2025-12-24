@@ -6,6 +6,9 @@ import swaggerJsdoc from "swagger-jsdoc";
 
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -13,7 +16,7 @@ const app = express();
 // ================= MIDDLEWARE =================
 app.use(express.json());
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: ["http://localhost:3000", "http://localhost:3001"],
   credentials: true,
 }));
 
@@ -24,7 +27,7 @@ const swaggerOptions = {
     info: {
       title: "Virtual Thrift Store API",
       version: "1.0.0",
-      description: "API documentation for Auth & Product APIs",
+      description: "API documentation for Virtual Thrift Store",
     },
     servers: [
       {
@@ -53,6 +56,9 @@ app.use("/uploads", express.static("uploads"));
 // ================= ROUTES =================
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/messages", messageRoutes);
 
 // ================= GLOBAL ERROR HANDLER (MUST BE LAST) =================
 app.use((err, req, res, next) => {
