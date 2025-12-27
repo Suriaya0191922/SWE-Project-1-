@@ -8,6 +8,7 @@ import {
   FaBoxOpen,
   FaUser,
   FaSignOutAlt,
+  FaCog,
 } from "react-icons/fa";
 
 export default function BuyerLayout({ children }) {
@@ -71,6 +72,8 @@ export default function BuyerLayout({ children }) {
     { name: "Cart & Wishlist", href: "/buyer/cart", icon: <FaShoppingCart /> },
     { name: "My Orders", href: "/buyer/myorders", icon: <FaBoxOpen /> },
     { name: "Messages", href: "/buyer/message", icon: <FaUser /> },
+    { name: "Profile", href: "/seller/profile", icon: <FaUser /> },
+    { name: "Settings", href: "/seller/settings", icon: <FaCog /> },
     { name: "Logout", href: "/", icon: <FaSignOutAlt />, isLogout: true },
   ];
 
