@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { FaUser, FaCog } from "react-icons/fa";
 
 export default function SellerLayout({ children }) {
   const [seller, setSeller] = useState({ name: "Loading...", email: "" });
@@ -58,6 +59,8 @@ export default function SellerLayout({ children }) {
     { name: "My Products", href: "/seller/product", icon: "📦" },
     { name: "Messages", href: "/seller/message", icon: "✉️" },
     { name: "Logout", href: "/", icon: "🚪" },
+    { name: "Profile", href: "/seller/profile", icon: <FaUser /> },
+    { name: "Settings", href: "/seller/settings", icon: <FaCog /> },
   ];
 
   const isActive = (href) => {
@@ -127,7 +130,7 @@ export default function SellerLayout({ children }) {
       position: "relative",
       cursor: "pointer",
       border: "none",
-      background: "none",
+      background: "transparent",
       width: "100%",
       textAlign: "left",
     },
