@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------- USERS -----------------
+model User {
+  id                Int      @id @default(autoincrement())
+  name              String
+  username          String   @unique
+  email             String
+  password          String
+  phone             String?
+  address           String?
+  role              String
+  preferredCategory String?
+  profileImage      String?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  products         Product[]
+  cartItems        Cart[]
+  wishlistItems    Wishlist[]
+  sentOrders       Order[]        @relation("OrderBuyer")
+  sentMessages     Message[]      @relation("MessageSender")
+  receivedMessages Message[]      @relation("MessageReceiver")
+  notifications    Notification[]
+
+  @@unique([email, role])
+}
+
+// ----------------- PRODUCTS -----------------
+model Product {
+  id          Int      @id @default(autoincrement())
+  productName String
+  category    String
+  condition   String
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+
+  sellerId Int
+  seller   User @relation(fields: [sellerId], references: [id])
+
+  // Relations
+  images        ProductImage[]
+  cartItems     Cart[]
+  wishlistItems Wishlist[] // Error-ti ekhane fix kora hoyeche
+  orderItems    OrderItem[]
+  messages      Message[]
+  notifications Notification[]
+}
+
+// ----------------- PRODUCT IMAGES -----------------
+model ProductImage {
+  id       Int    @id @default(autoincrement())
+  imageUrl String
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+}
+
+// ----------------- CART -----------------
+model Cart {
+  id        Int      @id @default(autoincrement())
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+// ----------------- WISHLIST -----------------
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+// ----------------- ORDER -----------------
+model Order {
+  id          Int      @id @default(autoincrement())
+  totalAmount Decimal  @db.Decimal(10, 2)
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+
+  buyerId Int
+  buyer   User @relation("OrderBuyer", fields: [buyerId], references: [id])
+
+  items OrderItem[]
+}
+
+// ----------------- ORDER ITEM -----------------
+model OrderItem {
+  id       Int     @id @default(autoincrement())
+  quantity Int
+  price    Decimal @db.Decimal(10, 2)
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+// ----------------- MESSAGE -----------------
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  senderId   Int
+  receiverId Int
+  productId  Int?
+
+  sender   User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiver User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  product  Product? @relation(fields: [productId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([productId])
+}
+
+// ----------------- NOTIFICATION -----------------
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id])
+}

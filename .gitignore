@@ -1,0 +1,8 @@
+# Environment variables
+backend/.env
+
+# User uploaded files
+backend/uploads/
+
+# Node
+node_modules/
