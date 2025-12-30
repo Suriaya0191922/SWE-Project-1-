@@ -91,3 +91,8 @@ httpServer.listen(PORT, () => {
   console.log(`Backend running at http://localhost:${PORT}`);
   console.log(`WebSocket server ready`);
 });
+
+const cors = require('cors');
+app.use(cors({
+  origin: 'আপনার-vercel-লিঙ্ক.vercel.app' // এখানে আপনার ফ্রন্টএন্ডের লিঙ্ক দিন
+}));
