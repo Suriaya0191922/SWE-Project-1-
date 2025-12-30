@@ -12,7 +12,8 @@ import {
   deleteProduct,
   informAdmin,
   getNotifications,
-  getSalesStats // <--- NEW: Import this
+  getSalesStats, // <--- NEW: Import this
+  deleteNotification
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -40,5 +41,8 @@ router.get("/sales-stats", adminAuth, getSalesStats);
 // --- NOTIFICATION SYSTEM ---
 router.post("/inform", sellerAuth, informAdmin);
 router.get("/notifications", adminAuth, getNotifications);
+
+
+router.delete("/notifications/:id", adminAuth, deleteNotification);
 
 export default router;
