@@ -134,25 +134,9 @@ export const getSalesStats = async (req, res) => {
 };
 
 // --- DELETE HANDLERS ---
-export const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.user.delete({ where: { id: parseInt(id) } });
-    res.json({ success: true, message: "User removed successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to delete user" });
-  }
-};
 
-export const deleteProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.product.delete({ where: { id: parseInt(id) } });
-    res.json({ success: true, message: "Product removed successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to delete product" });
-  }
-};
+
+
 
 // --- NOTIFICATIONS ---
 export const informAdmin = async (req, res) => {
@@ -184,5 +168,112 @@ export const getNotifications = async (req, res) => {
     res.json(notifications);
   } catch (err) {
     res.status(500).json({ message: "Error fetching notifications." });
+  }
+};
+
+export const deleteNotification = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.notification.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ message: "Notification deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting notification" });
+  }
+};
+// অ্যাডমিন যেকোনো প্রোডাক্ট ডিলিট করতে পারবে
+export const deleteProduct = async (req, res) => {
+  const { id } = req.params;
+  const pId = Number(id);
+
+  try {
+    // ১. সব ইমেজ মুছুন
+    await prisma.productImage.deleteMany({ where: { productId: pId } });
+
+    // ২. সব নোটিফিকেশন মুছুন
+    await prisma.notification.deleteMany({ where: { productId: pId } });
+
+    // ৩. বিক্রয় হিস্ট্রি বা SoldItem থেকে মুছুন (খুবই গুরুত্বপূর্ণ)
+    if (prisma.soldItem) {
+      await prisma.soldItem.deleteMany({ where: { productId: pId } });
+    }
+
+    // ৪. যদি কোনো কার্ট বা অর্ডার আইটেম থাকে (যদি আপনার স্কিমাতে থাকে)
+    if (prisma.orderItem) {
+      await prisma.orderItem.deleteMany({ where: { productId: pId } });
+    }
+
+    // ৫. এখন ফাইনালি প্রোডাক্ট ডিলিট করুন
+    await prisma.product.delete({
+      where: { id: pId }
+    });
+
+    res.json({ message: "Product and all its records deleted successfully" });
+  } catch (error) {
+    console.error("Critical Delete Error:", error);
+    res.status(500).json({ 
+      message: "Cannot delete! This product is essential for existing orders.",
+      details: error.message 
+    });
+  }
+};
+// ইউজার (Buyer/Seller) ডিলিট করার জন্য এটি ব্যবহার করুন
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  const userId = Number(id);
+
+  try {
+    // ১. ইউজারের পাঠানো বা পাওয়া সব মেসেজ ডিলিট করুন
+    await prisma.message.deleteMany({
+      where: { OR: [{ senderId: userId }, { receiverId: userId }] }
+    });
+
+    // ২. ইউজারের সব নোটিফিকেশন ডিলিট করুন
+    await prisma.notification.deleteMany({
+      where: { userId: userId }
+    });
+
+    // ৩. কার্ট এবং উইশলিস্ট আইটেম ডিলিট করুন
+    await prisma.cart.deleteMany({ where: { userId: userId } });
+    await prisma.wishlist.deleteMany({ where: { userId: userId } });
+
+    // ৪. ইউজার যদি সেলার হয়, তবে তার প্রোডাক্টের ইমেজগুলো আগে মুছুন
+    await prisma.productImage.deleteMany({
+      where: { product: { sellerId: userId } }
+    });
+
+    // ৫. ইউজারের প্রোডাক্টের সাথে যুক্ত অর্ডার আইটেম বা মেসেজ থাকলে সেগুলো হ্যান্ডেল করুন
+    await prisma.orderItem.deleteMany({
+      where: { product: { sellerId: userId } }
+    });
+
+    // ৬. ইউজারের করা সব অর্ডারের আইটেমগুলো মুছুন (যদি সে বায়ার হয়)
+    await prisma.orderItem.deleteMany({
+      where: { order: { buyerId: userId } }
+    });
+
+    // ৭. এখন ইউজারের মূল অর্ডারগুলো মুছুন
+    await prisma.order.deleteMany({
+      where: { buyerId: userId }
+    });
+
+    // ৮. ইউজারের সব প্রোডাক্ট মুছুন
+    await prisma.product.deleteMany({
+      where: { sellerId: userId }
+    });
+
+    // ৯. সবশেষে মূল ইউজারকে ডিলিট করুন
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    res.json({ message: "User and all related data (Orders, Messages, Products) deleted successfully." });
+  } catch (error) {
+    console.error("Master Delete Error:", error);
+    res.status(500).json({ 
+      message: "Could not delete user. Some data is still linked.",
+      error: error.message 
+    });
   }
 };
