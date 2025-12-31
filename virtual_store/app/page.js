@@ -205,13 +205,13 @@ export default function WelcomePage() {
             {/* Hero Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button 
-                onClick={() => router.push('/searchProduct')}
+                onClick={() => router.push('/signup')}
                 className="px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-bold text-lg transition-all hover:scale-105"
               >
                 Start Shopping
               </button>
               <button 
-                onClick={() => router.push('/signup')}
+                onClick={() => router.push('/searchProduct')}
                 className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-full font-bold text-lg transition-all hover:scale-105"
               >
                 Explore Collection
