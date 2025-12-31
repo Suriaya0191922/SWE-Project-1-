@@ -4,19 +4,25 @@ import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-
+import cors from "cors";  // Use import for cors
 
 // Import app AFTER dotenv.config()
-// ... rest of the code
 dotenv.config();
 
-const PORT = process.env.PORT || 5001;
+// Apply CORS middleware before setting up routes
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],  // Replace with your frontend URL(s)
+  methods: ["GET", "POST"],
+  credentials: true,  // Ensure credentials are allowed
+}));
+
+const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 
 // Initialize Socket.IO with CORS
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001"], // Add your frontend URLs
+    origin: ['http://localhost:3000', 'http://localhost:3001'], // Add your frontend URLs
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -28,7 +34,7 @@ const connectedUsers = new Map(); // userId -> socketId
 // Socket.IO Authentication Middleware
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
-  
+
   if (!token) {
     return next(new Error("Authentication error"));
   }
@@ -45,7 +51,7 @@ io.use((socket, next) => {
 // Socket.IO Connection Handler
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.userId}`);
-  
+
   // Store user's socket connection
   connectedUsers.set(socket.userId, socket.id);
 
@@ -91,8 +97,3 @@ httpServer.listen(PORT, () => {
   console.log(`Backend running at http://localhost:${PORT}`);
   console.log(`WebSocket server ready`);
 });
-
-const cors = require('cors');
-app.use(cors({
-  origin: 'আপনার-vercel-লিঙ্ক.vercel.app' // এখানে আপনার ফ্রন্টএন্ডের লিঙ্ক দিন
-}));
