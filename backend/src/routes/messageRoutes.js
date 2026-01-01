@@ -9,9 +9,17 @@ router.use(authenticate);
 
 /**
  * @swagger
+ * tags:
+ *   name: Messages
+ *   description: The Messages API
+ */
+
+/**
+ * @swagger
  * /api/messages:
  *   post:
  *     summary: Send a message
+ *     description: Allows the authenticated user to send a message to another user.
  *     tags: [Messages]
  *     security:
  *       - bearerAuth: []
@@ -24,11 +32,17 @@ router.use(authenticate);
  *             properties:
  *               receiverId:
  *                 type: integer
+ *                 description: ID of the recipient user
  *               content:
  *                 type: string
+ *                 description: The message content
  *     responses:
  *       201:
- *         description: Message sent
+ *         description: Message successfully sent
+ *       400:
+ *         description: Bad request (invalid input)
+ *       401:
+ *         description: Unauthorized access (token is required)
  */
 router.post("/", sendMessage);
 
@@ -37,28 +51,42 @@ router.post("/", sendMessage);
  * /api/messages:
  *   get:
  *     summary: Get user's messages
+ *     description: Retrieve all messages for the authenticated user.
  *     tags: [Messages]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Messages retrieved
+ *         description: A list of messages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   senderId:
+ *                     type: integer
+ *                   receiverId:
+ *                     type: integer
+ *                   content:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *       401:
+ *         description: Unauthorized access (token is required)
  */
-router.get("/", async (req, res, next) => {
-  console.log("Fetching messages for user:", req.user.id);
-  try {
-    await getMyMessages(req, res, next);
-  } catch (error) {
-    console.error("Error in getMyMessages:", error);
-    next(error);
-  }
-});
+router.get("/", getMyMessages);
 
 /**
  * @swagger
  * /api/messages/conversation/{otherUserId}:
  *   get:
  *     summary: Get conversation with another user
+ *     description: Retrieve all messages exchanged between the authenticated user and another user.
  *     tags: [Messages]
  *     security:
  *       - bearerAuth: []
@@ -66,11 +94,16 @@ router.get("/", async (req, res, next) => {
  *       - in: path
  *         name: otherUserId
  *         required: true
+ *         description: The ID of the other user to get the conversation with
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: Conversation messages
+ *         description: List of messages in the conversation
+ *       404:
+ *         description: Conversation not found
+ *       401:
+ *         description: Unauthorized access (token is required)
  */
 router.get("/conversation/:otherUserId", getConversation);
 
@@ -79,6 +112,7 @@ router.get("/conversation/:otherUserId", getConversation);
  * /api/messages/{messageId}/read:
  *   put:
  *     summary: Mark message as read
+ *     description: Allows the authenticated user to mark a specific message as read.
  *     tags: [Messages]
  *     security:
  *       - bearerAuth: []
@@ -86,11 +120,16 @@ router.get("/conversation/:otherUserId", getConversation);
  *       - in: path
  *         name: messageId
  *         required: true
+ *         description: The ID of the message to mark as read
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: Message marked as read
+ *         description: Message successfully marked as read
+ *       404:
+ *         description: Message not found
+ *       401:
+ *         description: Unauthorized access (token is required)
  */
 router.put("/:messageId/read", markAsRead);
 

@@ -9,15 +9,27 @@ router.use(authenticate);
 
 /**
  * @swagger
+ * tags:
+ *   name: Orders
+ *   description: The Orders API
+ */
+
+/**
+ * @swagger
  * /api/orders:
  *   post:
- *     summary: Place an order from cart
+ *     summary: Place an order from the cart
+ *     description: Place an order based on the items in the user's cart.
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       201:
  *         description: Order placed successfully
+ *       400:
+ *         description: Bad request (e.g., cart is empty or invalid data)
+ *       401:
+ *         description: Unauthorized access (token is required)
  */
 router.post("/", placeOrder);
 
@@ -26,12 +38,31 @@ router.post("/", placeOrder);
  * /api/orders:
  *   get:
  *     summary: Get user's orders
+ *     description: Fetch all orders placed by the authenticated user.
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Orders retrieved
+ *         description: A list of orders placed by the authenticated user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   totalAmount:
+ *                     type: number
+ *                   status:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *       401:
+ *         description: Unauthorized access (token is required)
  */
 router.get("/", getMyOrders);
 
@@ -39,7 +70,8 @@ router.get("/", getMyOrders);
  * @swagger
  * /api/orders/{orderId}:
  *   get:
- *     summary: Get order by ID
+ *     summary: Get order details by ID
+ *     description: Fetch detailed information for a specific order by its ID.
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -47,11 +79,16 @@ router.get("/", getMyOrders);
  *       - in: path
  *         name: orderId
  *         required: true
+ *         description: The ID of the order you want to retrieve.
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: Order details
+ *         description: Detailed information for the requested order
+ *       404:
+ *         description: Order not found
+ *       401:
+ *         description: Unauthorized access (token is required)
  */
 router.get("/:orderId", getOrderById);
 
