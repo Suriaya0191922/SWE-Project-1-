@@ -18,7 +18,7 @@ pipeline {
             steps {
                 dir('backend') {
                     bat '''
-                        set DATABASE_URL=file:./test.db
+                        set DATABASE_URL=postgresql://postgres:110sumaiya@localhost:5432/campus_thrift
                         npm test
                     '''
                 }
