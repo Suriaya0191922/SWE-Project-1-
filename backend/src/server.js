@@ -1,99 +1,69 @@
-import "./cron/cleanupCron.js";
-import app from "./app.js";
+// src/server.js
 import dotenv from "dotenv";
+dotenv.config();
+
+import app from "./app.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-import cors from "cors";  // Use import for cors
 
-// Import app AFTER dotenv.config()
-dotenv.config();
+export { app };  // EXPORT APP FIRST for tests
 
-// Apply CORS middleware before setting up routes
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],  // Replace with your frontend URL(s)
-  methods: ["GET", "POST"],
-  credentials: true,  // Ensure credentials are allowed
-}));
+let io, connectedUsers, httpServer;
 
-const PORT = process.env.PORT || 5000;
-const httpServer = createServer(app);
+if (process.env.NODE_ENV !== "test") {
+  // Only run in development/production
+  httpServer = createServer(app);
+  
+  io = new Server(httpServer, {
+    cors: {
+      origin: ['http://localhost:3000', 'http://localhost:3001'],
+      methods: ["GET", "POST"],
+      credentials: true,
+    },
+  });
 
-// Initialize Socket.IO with CORS
-const io = new Server(httpServer, {
-  cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001'], // Add your frontend URLs
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+  connectedUsers = new Map();
 
-// Store connected users
-const connectedUsers = new Map(); // userId -> socketId
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) return next(new Error("Authentication error"));
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.id;
+      next();
+    } catch {
+      next(new Error("Authentication error"));
+    }
+  });
 
-// Socket.IO Authentication Middleware
-io.use((socket, next) => {
-  const token = socket.handshake.auth.token;
+  io.on("connection", (socket) => {
+    console.log(`User connected: ${socket.userId}`);
+    connectedUsers.set(socket.userId, socket.id);
+    socket.join(`user:${socket.userId}`);
+    socket.broadcast.emit("user:online", { userId: socket.userId });
 
-  if (!token) {
-    return next(new Error("Authentication error"));
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.userId = decoded.id;
-    next();
-  } catch (err) {
-    next(new Error("Authentication error"));
-  }
-});
-
-// Socket.IO Connection Handler
-io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.userId}`);
-
-  // Store user's socket connection
-  connectedUsers.set(socket.userId, socket.id);
-
-  // Join user's personal room
-  socket.join(`user:${socket.userId}`);
-
-  // Notify user is online
-  socket.broadcast.emit("user:online", { userId: socket.userId });
-
-  // Handle user typing
-  socket.on("typing:start", ({ receiverId }) => {
-    io.to(`user:${receiverId}`).emit("typing:started", {
-      userId: socket.userId,
+    socket.on("typing:start", ({ receiverId }) => {
+      io.to(`user:${receiverId}`).emit("typing:started", { userId: socket.userId });
+    });
+    socket.on("typing:stop", ({ receiverId }) => {
+      io.to(`user:${receiverId}`).emit("typing:stopped", { userId: socket.userId });
+    });
+    socket.on("message:read", ({ senderId, messageIds }) => {
+      io.to(`user:${senderId}`).emit("message:read", { messageIds, readBy: socket.userId });
+    });
+    socket.on("disconnect", () => {
+      console.log(`User disconnected: ${socket.userId}`);
+      connectedUsers.delete(socket.userId);
+      socket.broadcast.emit("user:offline", { userId: socket.userId });
     });
   });
 
-  socket.on("typing:stop", ({ receiverId }) => {
-    io.to(`user:${receiverId}`).emit("typing:stopped", {
-      userId: socket.userId,
-    });
+  const PORT = process.env.PORT || 5000;
+  httpServer.listen(PORT, () => {
+    console.log(`Backend running at http://localhost:${PORT}`);
+    console.log(`WebSocket server ready`);
   });
+}
 
-  // Handle message read status
-  socket.on("message:read", ({ senderId, messageIds }) => {
-    io.to(`user:${senderId}`).emit("message:read", {
-      messageIds,
-      readBy: socket.userId,
-    });
-  });
-
-  // Handle disconnection
-  socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.userId}`);
-    connectedUsers.delete(socket.userId);
-    socket.broadcast.emit("user:offline", { userId: socket.userId });
-  });
-});
-
-// Export io instance for use in controllers
-export { io, connectedUsers };
-
-httpServer.listen(PORT, () => {
-  console.log(`Backend running at http://localhost:${PORT}`);
-  console.log(`WebSocket server ready`);
-});
+export { io, connectedUsers, httpServer };
