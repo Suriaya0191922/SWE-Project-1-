@@ -3,9 +3,7 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Install Dependencies') {
@@ -16,10 +14,13 @@ pipeline {
             }
         }
 
-        stage('Run Automated Tests') {
+        stage('Run Tests') {
             steps {
                 dir('backend') {
-                    bat 'npm test'
+                    bat '''
+                        set DATABASE_URL=file:./test.db
+                        npm test
+                    '''
                 }
             }
         }
